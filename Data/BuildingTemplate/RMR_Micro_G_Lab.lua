@@ -2,7 +2,7 @@
 
 PlaceObj('ModItemBuildingTemplate', {
 	'Id', "RMR_Micro_G_Lab",
-	'SaveIn', "Mod/JTTAEkH",
+	'SaveIn', "Mod/nXFgchR",
 	'mod_handle', 1,
 	'object_class', "ScienceInstitute",
 	'construction_cost_Metals', 15000,

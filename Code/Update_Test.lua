@@ -412,7 +412,7 @@ local function LooksLikeMod(fp)
 	if s:find("Update_Test", 1, true) then
 		return true
 	end
-	if s:find("Realistic Mars", 1, true) or s:find("JTTAEkH", 1, true) then
+	if s:find("Realistic Mars", 1, true) or s:find("nXFgchR", 1, true) then
 		return true
 	end
 	if s:find("AppData", 1, true) and s:find("[Mm]od", 1) then

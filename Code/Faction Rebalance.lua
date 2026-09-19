@@ -73,7 +73,7 @@ local function Want(c)
     end
     local lvl = LevelOf(fid)
     return lvl, ScaleAmt(ComfortDelta[lvl] or 0), ScaleAmt(SanityDelta[lvl] or 0)
-ends
+end
 
 local function ClearSanity(c)
     local st = c.rmr_fp
