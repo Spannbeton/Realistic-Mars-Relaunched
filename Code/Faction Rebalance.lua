@@ -69,6 +69,49 @@ local function LevelOf(fid)
     return lvl
 end
 
+local function ReasonText(r)
+    if type(r) == "table" and _InternalTranslate then
+        return _InternalTranslate(r)
+    end
+    return tostring(r or "")
+end
+
+local function IsPoliticsReason(r)
+    return ReasonText(r) == ReasonText(Reason)
+end
+
+local function LogSum(log)
+    local sum = 0
+    if type(log) ~= "table" then
+        return 0
+    end
+    for i = 1, #log, 3 do
+        if IsPoliticsReason(log[i + 2]) then
+            sum = sum + (tonumber(log[i + 1]) or 0)
+        end
+    end
+    return sum
+end
+
+local function LogStrip(log)
+    local sum = 0
+    if type(log) ~= "table" then
+        return 0
+    end
+    local i = 1
+    while i + 2 <= #log do
+        if IsPoliticsReason(log[i + 2]) then
+            sum = sum + (tonumber(log[i + 1]) or 0)
+            table.remove(log, i)
+            table.remove(log, i)
+            table.remove(log, i)
+        else
+            i = i + 3
+        end
+    end
+    return sum
+end
+
 local function Want(c)
     if not ToggleFaction or not c then
         return false, 0, 0
@@ -81,16 +124,55 @@ local function Want(c)
     return lvl, ScaleAmt(ComfortDelta[lvl] or 0), ScaleAmt(SanityDelta[lvl] or 0)
 end
 
-local function ClearHeld(c)
-    local st = c.rmr_fp
-    if not st then
+local function SetComfort(c, soll)
+    if not c then
         return
     end
-    if st.comfort and st.comfort ~= 0 and c.ChangeComfort then
-        c:ChangeComfort(-st.comfort, Reason, true)
+    local ist = LogSum(c.log_comfort)
+    if ist == soll then
+        return
     end
-    if st.sanity and st.sanity ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(-st.sanity, Reason)
+    LogStrip(c.log_comfort)
+    if c.stat_comfort then
+        local scale = const and const.Scale and const.Scale.Stat or 1
+        local maxs = 100 * scale
+        local v = (c.stat_comfort or 0) - ist
+        if v < 0 then
+            v = 0
+        end
+        if v > maxs then
+            v = maxs
+        end
+        c.stat_comfort = v
+    end
+    if soll ~= 0 and c.ChangeComfort then
+        c:ChangeComfort(soll, Reason, true)
+    end
+end
+
+local function SetSanity(c, soll)
+    if not c then
+        return
+    end
+    local ist = LogSum(c.log_sanity)
+    if ist == soll then
+        return
+    end
+    LogStrip(c.log_sanity)
+    if c.stat_sanity then
+        local scale = const and const.Scale and const.Scale.Stat or 1
+        local maxs = 100 * scale
+        local v = (c.stat_sanity or 0) - ist
+        if v < 0 then
+            v = 0
+        end
+        if v > maxs then
+            v = maxs
+        end
+        c.stat_sanity = v
+    end
+    if soll ~= 0 and c.ChangeSanity then
+        c:ChangeSanity(soll, Reason)
     end
 end
 
@@ -99,36 +181,13 @@ local function ApplyOne(c)
         return
     end
     local lvl, want_c, want_s = Want(c)
-    local st = c.rmr_fp or { comfort = 0, sanity = 0, level = false, fid = false }
     if not lvl then
-        ClearHeld(c)
-        c.rmr_fp = nil
+        SetComfort(c, 0)
+        SetSanity(c, 0)
         return
     end
-    if st.fid ~= c.faction_supported or st.level ~= lvl or st.comfort ~= want_c then
-        if st.comfort and st.comfort ~= 0 and c.ChangeComfort then
-            c:ChangeComfort(-st.comfort, Reason, true)
-        end
-        if want_c ~= 0 and c.ChangeComfort then
-            c:ChangeComfort(want_c, Reason, true)
-        end
-        st.comfort = want_c
-    end
-    if st.fid ~= c.faction_supported or st.level ~= lvl then
-        if st.sanity and st.sanity ~= 0 and c.ChangeSanity then
-            c:ChangeSanity(-st.sanity, Reason)
-        end
-        st.sanity = 0
-    end
-    if want_s ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(want_s, Reason)
-        st.sanity = want_s
-    else
-        st.sanity = 0
-    end
-    st.level = lvl
-    st.fid = c.faction_supported
-    c.rmr_fp = st
+    SetComfort(c, want_c)
+    SetSanity(c, want_s)
 end
 
 local function ApplyAll()
