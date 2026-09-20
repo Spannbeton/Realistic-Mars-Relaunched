@@ -268,7 +268,7 @@ return {
 			'name', "Free_Laws_Assembly",
 			'DisplayName', "Free Laws Martian Assembly",
 			'Help', "Extra laws permitted while a Martian Assembly is operating.",
-			'DefaultValue', 2,
+			'DefaultValue', 6,
 			'MaxValue', 20,
 		}),
 		PlaceObj('ModItemOptionNumber', {
