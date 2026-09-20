@@ -78,7 +78,7 @@ end
 local function ClearSanity(c)
     local st = c.rmr_fp
     if st and st.sanity and st.sanity ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(-st.sanity, Reason)
+        c:ChangeSanity(-st.sanity, T(0000, Reason))
     end
 end
 
@@ -98,7 +98,7 @@ local function ApplyOne(c)
         st.sanity = 0
     end
     if want_s ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(want_s, Reason)
+        c:ChangeSanity(want_s, T(0000, Reason))
         st.sanity = want_s
     else
         st.sanity = 0

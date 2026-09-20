@@ -226,7 +226,7 @@ local function ApplySanity(points, label)
     print("RMR Starman sanity", points, delta, #list)
     for _, c in ipairs(list) do
         if c.ChangeSanity then
-            c:ChangeSanity(delta, label)
+            c:ChangeSanity(delta, T(0000, label))
         end
     end
 end

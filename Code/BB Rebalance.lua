@@ -239,10 +239,10 @@ local function ApplyUGSanityDay()
         if EligibleAge(c) and c.ChangeSanity then
             if ObjectIsInEnvironment(c, "Underground") then
                 if lack > 0 then
-                    c:ChangeSanity(lack, "I am safe underground")
+                    c:ChangeSanity(lack, T(0000, "I am safe underground"))
                 end
             elseif ObjectIsInEnvironment(c, "Surface") and c.GetMap and not GetAtmosphereBreathable(c:GetMap()) then
-                c:ChangeSanity(-lack * 2, "This place is unsafe")
+                c:ChangeSanity(-lack * 2, T(0000, "This place is unsafe"))
             end
         end
     end
