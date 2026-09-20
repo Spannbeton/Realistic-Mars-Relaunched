@@ -104,7 +104,7 @@ local function LawDaily(self)
         self:ChangeComfort(comfort * const.Scale.Stat, reason)
     end
     if san ~= 0 and self.ChangeSanity then
-        self:ChangeSanity(san * const.Scale.Stat, "Too many laws.")
+        self:ChangeSanity(san * const.Scale.Stat, T(0000, "Too many laws."))
     end
 end
 

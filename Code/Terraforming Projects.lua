@@ -437,10 +437,10 @@ local function HitAsteroidCrew(city)
     local n = 0
     for _, c in ipairs((city.labels and city.labels.Colonist) or empty_table) do
         if c.ChangeSanity then
-            c:ChangeSanity(-20 * scale, "Armageddon")
+            c:ChangeSanity(-20 * scale, T(0000, "Armageddon"))
         end
         if c.ChangeComfort then
-            c:ChangeComfort(-60 * scale, "Deep Impact")
+            c:ChangeComfort(-60 * scale, T(0000, "Deep Impact"))
         end
         n = n + 1
     end
