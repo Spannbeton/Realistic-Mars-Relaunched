@@ -1,7 +1,4 @@
 local ToggleFaction = true
-local TargetWrapped
-
-GameVar("RMR_FactionPol", {})
 
 local ComfortDelta = {
     breaking_point = -18,
@@ -53,18 +50,70 @@ local function InAssembly(fid)
 end
 
 local function LevelOf(fid)
-    if not fid or not GetFactionApprovalLevel then
+    if not fid then
         return "content"
     end
-    local lvl = GetFactionApprovalLevel(fid) or "content"
+    local lvl = "content"
+    local holder = rawget(_G, "g_FactionsHolder")
+    if holder and holder.GetFactionApprovalLevel then
+        lvl = holder:GetFactionApprovalLevel(fid) or "content"
+    else
+        local fn = rawget(_G, "GetFactionApprovalLevel")
+        if fn then
+            lvl = fn(fid) or "content"
+        end
+    end
     if InAssembly(fid) and ShiftUp[lvl] then
         lvl = ShiftUp[lvl]
     end
     return lvl
 end
 
+local function ReasonText(r)
+    if type(r) == "table" and _InternalTranslate then
+        return _InternalTranslate(r)
+    end
+    return tostring(r or "")
+end
+
+local function IsPoliticsReason(r)
+    return ReasonText(r) == ReasonText(Reason)
+end
+
+local function LogSum(log)
+    local sum = 0
+    if type(log) ~= "table" then
+        return 0
+    end
+    for i = 1, #log, 3 do
+        if IsPoliticsReason(log[i + 2]) then
+            sum = sum + (tonumber(log[i + 1]) or 0)
+        end
+    end
+    return sum
+end
+
+local function LogStrip(log)
+    local sum = 0
+    if type(log) ~= "table" then
+        return 0
+    end
+    local i = 1
+    while i + 2 <= #log do
+        if IsPoliticsReason(log[i + 2]) then
+            sum = sum + (tonumber(log[i + 1]) or 0)
+            table.remove(log, i)
+            table.remove(log, i)
+            table.remove(log, i)
+        else
+            i = i + 3
+        end
+    end
+    return sum
+end
+
 local function Want(c)
-    if not ToggleFaction or not c  then
+    if not ToggleFaction or not c then
         return false, 0, 0
     end
     local fid = c.faction_supported
@@ -75,10 +124,55 @@ local function Want(c)
     return lvl, ScaleAmt(ComfortDelta[lvl] or 0), ScaleAmt(SanityDelta[lvl] or 0)
 end
 
-local function ClearSanity(c)
-    local st = c.rmr_fp
-    if st and st.sanity and st.sanity ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(-st.sanity, T(0000, Reason))
+local function SetComfort(c, soll)
+    if not c then
+        return
+    end
+    local ist = LogSum(c.log_comfort)
+    if ist == soll then
+        return
+    end
+    LogStrip(c.log_comfort)
+    if c.stat_comfort then
+        local scale = const and const.Scale and const.Scale.Stat or 1
+        local maxs = 100 * scale
+        local v = (c.stat_comfort or 0) - ist
+        if v < 0 then
+            v = 0
+        end
+        if v > maxs then
+            v = maxs
+        end
+        c.stat_comfort = v
+    end
+    if soll ~= 0 and c.ChangeComfort then
+        c:ChangeComfort(soll, Reason, true)
+    end
+end
+
+local function SetSanity(c, soll)
+    if not c then
+        return
+    end
+    local ist = LogSum(c.log_sanity)
+    if ist == soll then
+        return
+    end
+    LogStrip(c.log_sanity)
+    if c.stat_sanity then
+        local scale = const and const.Scale and const.Scale.Stat or 1
+        local maxs = 100 * scale
+        local v = (c.stat_sanity or 0) - ist
+        if v < 0 then
+            v = 0
+        end
+        if v > maxs then
+            v = maxs
+        end
+        c.stat_sanity = v
+    end
+    if soll ~= 0 and c.ChangeSanity then
+        c:ChangeSanity(soll, Reason)
     end
 end
 
@@ -87,26 +181,13 @@ local function ApplyOne(c)
         return
     end
     local lvl, want_c, want_s = Want(c)
-    local st = c.rmr_fp or { comfort = 0, sanity = 0, level = false, fid = false }
     if not lvl then
-        ClearSanity(c)
-        c.rmr_fp = nil
+        SetComfort(c, 0)
+        SetSanity(c, 0)
         return
     end
-    if st.fid ~= c.faction_supported or st.level ~= lvl then
-        ClearSanity(c)
-        st.sanity = 0
-    end
-    if want_s ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(want_s, T(0000, Reason))
-        st.sanity = want_s
-    else
-        st.sanity = 0
-    end
-    st.comfort = want_c
-    st.level = lvl
-    st.fid = c.faction_supported
-    c.rmr_fp = st
+    SetComfort(c, want_c)
+    SetSanity(c, want_s)
 end
 
 local function ApplyAll()
@@ -118,25 +199,8 @@ local function ApplyAll()
     end
 end
 
-local function WrapTarget()
-    if TargetWrapped or not Colonist or not Colonist.GetRestStatTarget then
-        return
-    end
-    TargetWrapped = true
-    local old = Colonist.GetRestStatTarget
-    function Colonist:GetRestStatTarget(...)
-        local t = old(self, ...)
-        local st = rawget(self, "rmr_fp")
-        if ToggleFaction and st and st.comfort and st.comfort ~= 0 then
-            return (t or 0) + st.comfort
-        end
-        return t
-    end
-end
-
 function OnMsg.ModsReloaded()
     ReadToggle()
-    WrapTarget()
 end
 
 function OnMsg.ApplyModOptions(id)
@@ -150,15 +214,9 @@ function OnMsg.NewDay()
 end
 
 function OnMsg.LoadGame()
-    WrapTarget()
     ApplyAll()
 end
 
 function OnMsg.NewMapLoaded()
     ReadToggle()
-    WrapTarget()
-end
-
-function OnMsg.ClassesBuilt()
-    WrapTarget()
 end
