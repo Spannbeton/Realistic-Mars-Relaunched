@@ -1,7 +1,4 @@
 local ToggleFaction = true
-local TargetWrapped
-
-GameVar("RMR_FactionPol", {})
 
 local ComfortDelta = {
     breaking_point = -18,
@@ -53,10 +50,19 @@ local function InAssembly(fid)
 end
 
 local function LevelOf(fid)
-    if not fid or not GetFactionApprovalLevel then
+    if not fid then
         return "content"
     end
-    local lvl = GetFactionApprovalLevel(fid) or "content"
+    local lvl = "content"
+    local holder = rawget(_G, "g_FactionsHolder")
+    if holder and holder.GetFactionApprovalLevel then
+        lvl = holder:GetFactionApprovalLevel(fid) or "content"
+    else
+        local fn = rawget(_G, "GetFactionApprovalLevel")
+        if fn then
+            lvl = fn(fid) or "content"
+        end
+    end
     if InAssembly(fid) and ShiftUp[lvl] then
         lvl = ShiftUp[lvl]
     end
@@ -64,7 +70,7 @@ local function LevelOf(fid)
 end
 
 local function Want(c)
-    if not ToggleFaction or not c  then
+    if not ToggleFaction or not c then
         return false, 0, 0
     end
     local fid = c.faction_supported
@@ -75,10 +81,16 @@ local function Want(c)
     return lvl, ScaleAmt(ComfortDelta[lvl] or 0), ScaleAmt(SanityDelta[lvl] or 0)
 end
 
-local function ClearSanity(c)
+local function ClearHeld(c)
     local st = c.rmr_fp
-    if st and st.sanity and st.sanity ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(-st.sanity, T(0000, Reason))
+    if not st then
+        return
+    end
+    if st.comfort and st.comfort ~= 0 and c.ChangeComfort then
+        c:ChangeComfort(-st.comfort, Reason, true)
+    end
+    if st.sanity and st.sanity ~= 0 and c.ChangeSanity then
+        c:ChangeSanity(-st.sanity, Reason)
     end
 end
 
@@ -89,21 +101,31 @@ local function ApplyOne(c)
     local lvl, want_c, want_s = Want(c)
     local st = c.rmr_fp or { comfort = 0, sanity = 0, level = false, fid = false }
     if not lvl then
-        ClearSanity(c)
+        ClearHeld(c)
         c.rmr_fp = nil
         return
     end
+    if st.fid ~= c.faction_supported or st.level ~= lvl or st.comfort ~= want_c then
+        if st.comfort and st.comfort ~= 0 and c.ChangeComfort then
+            c:ChangeComfort(-st.comfort, Reason, true)
+        end
+        if want_c ~= 0 and c.ChangeComfort then
+            c:ChangeComfort(want_c, Reason, true)
+        end
+        st.comfort = want_c
+    end
     if st.fid ~= c.faction_supported or st.level ~= lvl then
-        ClearSanity(c)
+        if st.sanity and st.sanity ~= 0 and c.ChangeSanity then
+            c:ChangeSanity(-st.sanity, Reason)
+        end
         st.sanity = 0
     end
     if want_s ~= 0 and c.ChangeSanity then
-        c:ChangeSanity(want_s, T(0000, Reason))
+        c:ChangeSanity(want_s, Reason)
         st.sanity = want_s
     else
         st.sanity = 0
     end
-    st.comfort = want_c
     st.level = lvl
     st.fid = c.faction_supported
     c.rmr_fp = st
@@ -118,25 +140,8 @@ local function ApplyAll()
     end
 end
 
-local function WrapTarget()
-    if TargetWrapped or not Colonist or not Colonist.GetRestStatTarget then
-        return
-    end
-    TargetWrapped = true
-    local old = Colonist.GetRestStatTarget
-    function Colonist:GetRestStatTarget(...)
-        local t = old(self, ...)
-        local st = rawget(self, "rmr_fp")
-        if ToggleFaction and st and st.comfort and st.comfort ~= 0 then
-            return (t or 0) + st.comfort
-        end
-        return t
-    end
-end
-
 function OnMsg.ModsReloaded()
     ReadToggle()
-    WrapTarget()
 end
 
 function OnMsg.ApplyModOptions(id)
@@ -150,15 +155,9 @@ function OnMsg.NewDay()
 end
 
 function OnMsg.LoadGame()
-    WrapTarget()
     ApplyAll()
 end
 
 function OnMsg.NewMapLoaded()
     ReadToggle()
-    WrapTarget()
-end
-
-function OnMsg.ClassesBuilt()
-    WrapTarget()
 end
