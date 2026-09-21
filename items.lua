@@ -389,6 +389,21 @@ return {
 		PlaceObj('ModItemOptionToggle', {
 			'name', "Sponsor_Rebalance",
 			'DisplayName', "Sponsor Rebalance",
+			'Help', "Easy Sponsors lose funding and excess rockets to make them harder to start with.",
+			'DefaultValue', true,
+		}),
+		}),
+			PlaceObj('ModItemFolder', {
+		'name', "Global Support Rebalance",
+	}, {
+		PlaceObj('ModItemCode', {
+			'name', "Global Support Rebalance",
+			'CodeFileName', "Code/Global Support Rebalance.lua",
+		}),
+		PlaceObj('ModItemOptionToggle', {
+			'name', "Global_Support_Rebalance",
+			'DisplayName', "Global Support Rebalance",
+			'Help', "Global Support now only buys you access to prefabs on earth not building rights. You can unlock the same at high rival standing.",
 			'DefaultValue', true,
 		}),
 		}),

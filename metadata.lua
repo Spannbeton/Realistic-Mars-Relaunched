@@ -33,6 +33,7 @@ return PlaceObj('ModDef', {
 		"Code/Faction Screen.lua",
 		"Code/Faction Rebalance.lua",
 		"Code/Sponsor Rebalance.lua",
+		"Code/Global Support Rebalance.lua",
 	},
 	'default_options', {
 		Battery_Rebalance = true,
@@ -43,6 +44,7 @@ return PlaceObj('ModDef', {
 		Free_Laws_Assembly = 2,
 		Free_Laws_Ministry = 1,
 		Funding_Percent = 100,
+		Global_Support_Rebalance = true,
 		Law_Rebalance = true,
 		Laws_Comfort_Penalty = 2,
 		Laws_Sanity_Penalty = 1,
