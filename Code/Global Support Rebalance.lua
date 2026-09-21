@@ -76,7 +76,7 @@ end
 
 local function EnsureSponsorRocketCargo(sponsor)
     local class = SPONSOR_ROCKET[sponsor]
-	local weight
+    local weight
     if not class then
         return
     end
@@ -93,13 +93,13 @@ local function EnsureSponsorRocketCargo(sponsor)
     local price
     if class == "UniversalDragonRocket" then
         price = 2000000000
-		weight = 30000
+        weight = 30000
     elseif class == "UniversalZeusRocket" then
         price = 4000000000
-		weight = 50000
-	elseif class == "UniversalRocket" then
-		price = 3000000000
-		weight= 40000
+        weight = 50000
+    elseif class == "UniversalRocket" then
+        price = 3000000000
+        weight= 40000
     else
         price = UnitPrice(mine)
         if price <= 0 and g_Consts then
@@ -120,7 +120,7 @@ local function EnsureSponsorRocketCargo(sponsor)
             return s == sponsor
         end,
     })
-	if ResupplyItemsInit then
+    if ResupplyItemsInit then
         ResupplyItemsInit()
     end
     print("RMR earth rocket cargo", sponsor, class, price)
@@ -164,7 +164,6 @@ local function EarthPopup(kind, sponsor, unlocked)
         })
     end)
 end
-
 
 local function MarkSponsorDone(sponsor)
     RMR_EarthSponsorsDone = RMR_EarthSponsorsDone or {}
@@ -277,7 +276,8 @@ local function WrapPrefabList()
         for id in pairs(RMR_EarthUnlocked) do
             local cargo = CargoPreset and CargoPreset[id]
             local def = GetResupplyItem and GetResupplyItem(id)
-            if cargo and cargo.building and def then
+            local tmpl = cargo and ((cargo.building and BuildingTemplates and BuildingTemplates[cargo.building]) or CargoTemplate(cargo, id))
+            if cargo and def and tmpl then
                 local found
                 for i = 1, #list do
                     if list[i].id == id then
@@ -357,7 +357,10 @@ local function WrapGlobalSupportTech()
     if GSTechWrapped then
         return
     end
-    local def = TechDef and TechDef.GlobalSupport
+    local def = Techs and Techs.GlobalSupport
+    if not def then
+        def = TechDef and TechDef.GlobalSupport
+    end
     if not def or not def.OnResearched then
         print("RMR gs tech skip")
         return
@@ -482,18 +485,8 @@ function RMR_UnlockSponsorEarthPrefabs(sponsor, reason)
                 UIColony.RMR_EarthUnlocked = {}
             end
             UIColony.RMR_EarthUnlocked[id] = true
-            if cargo.building then
-                UIColony.RMR_EarthUnlocked[cargo.building] = true
-            end
-            if cargo.building then
-                RMR_EarthUnlocked[cargo.building] = true
-            end
-            local tmpl = CargoTemplate(cargo, id)
-            if tmpl and tmpl.id then
-                RMR_EarthUnlocked[tmpl.id] = true
-            end
             RMR_EarthUnlocked[id] = true
-            print("RMR earth flag", id, cargo.building, tmpl and tmpl.id)
+            print("RMR earth flag", id, cargo.building)
             unlocked[#unlocked + 1] = id
         end
     end
@@ -501,7 +494,6 @@ function RMR_UnlockSponsorEarthPrefabs(sponsor, reason)
     WrapCargoList()
     WrapPayloadLocks()
     WrapPrefabList()
-    WrapBuildingLock()
     print("RMR earth done", sponsor, table.concat(unlocked, " "))
     print("RMR earth missing", sponsor, #missing == 0 and "none" or table.concat(missing, " "), "\n")
     if reason and #unlocked > 0 then
