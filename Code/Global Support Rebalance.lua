@@ -486,7 +486,21 @@ function RMR_UnlockSponsorEarthPrefabs(sponsor, reason)
             end
             UIColony.RMR_EarthUnlocked[id] = true
             RMR_EarthUnlocked[id] = true
-            print("RMR earth flag", id, cargo.building)
+            if cargo.building then
+                UIColony.RMR_EarthUnlocked[cargo.building] = true
+                RMR_EarthUnlocked[cargo.building] = true
+            end
+            local tmpl = CargoTemplate(cargo, id)
+            local bid = (tmpl and (tmpl.id or tmpl.class)) or cargo.building or id
+            if bid then
+                RMR_EarthUnlocked[bid] = true
+                local lock = rawget(_G, "LockBuilding")
+                if lock then
+                    lock(bid, "disable", T{"We can only buy prefabs from earth"})
+                    print("RMR earth lock", bid, BuildMenuPrerequisiteOverrides and BuildMenuPrerequisiteOverrides[bid])
+                end
+            end
+            print("RMR earth flag", id, cargo.building, bid)
             unlocked[#unlocked + 1] = id
         end
     end
@@ -494,6 +508,7 @@ function RMR_UnlockSponsorEarthPrefabs(sponsor, reason)
     WrapCargoList()
     WrapPayloadLocks()
     WrapPrefabList()
+    WrapBuildingLock()
     print("RMR earth done", sponsor, table.concat(unlocked, " "))
     print("RMR earth missing", sponsor, #missing == 0 and "none" or table.concat(missing, " "), "\n")
     if reason and #unlocked > 0 then
