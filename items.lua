@@ -393,7 +393,7 @@ return {
 			'DefaultValue', true,
 		}),
 		}),
-			PlaceObj('ModItemFolder', {
+	PlaceObj('ModItemFolder', {
 		'name', "Global Support Rebalance",
 	}, {
 		PlaceObj('ModItemCode', {
