@@ -8,7 +8,7 @@ return PlaceObj('ModDef', {
 	'author', "Spannbeton",
 	'version_major', 1,
 	'version_minor', 10,
-	'version', 80,
+	'version', 81,
 	'lua_revision', 350453,
 	'saved_with_revision', 405907,
 	'restart_on_unload', true,
@@ -78,8 +78,8 @@ return PlaceObj('ModDef', {
 		Wonder_Rebalance = true,
 	},
 	'has_data', true,
-	'saved', 1790617374,
-	'code_hash', 2440687656872381066,
+	'saved', 1790619776,
+	'code_hash', 2771296006108549552,
 	'affected_resources', {
 		PlaceObj('ModResourcePreset', {
 			'Class', "BuildingTemplate",
@@ -88,7 +88,7 @@ return PlaceObj('ModDef', {
 		}),
 	},
 	'pdx_id', 159922,
-	'pdx_version', "2",
+	'pdx_version', "3",
 	'steam_id', "3804635230",
 	'TagGameplay', true,
 	'TagBuildings', true,
