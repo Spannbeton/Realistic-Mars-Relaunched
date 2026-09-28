@@ -224,6 +224,33 @@ local function Telescope_Apply()
     Wonder_HookAsteroids()
 end
 
+local Mohole_VanillaCosts = nil
+
+local function Mohole_GetVanillaCosts(tmpl)
+    if Mohole_VanillaCosts then
+        return Mohole_VanillaCosts
+    end
+
+    Mohole_VanillaCosts = {}
+
+    for _, key in ipairs({
+        "construction_cost_Concrete",
+        "construction_cost_Metals",
+        "construction_cost_MachineParts",
+        "construction_cost_Electronics",
+        "construction_cost_Polymers",
+        "construction_cost_PreciousMetals",
+        "construction_cost_PreciousMinerals",
+    }) do
+        local v = tmpl[key]
+        if type(v) == "number" and v > 0 then
+            Mohole_VanillaCosts[key] = v
+        end
+    end
+
+    return Mohole_VanillaCosts
+end
+
 local function Mohole_Apply()
     local tmpl = BuildingTemplates and BuildingTemplates.MoholeMine
     local cls = rawget(_G, "MoholeMine")
@@ -246,19 +273,14 @@ local function Mohole_Apply()
     local rare = Mohole_RarePerWorker * 5
     local waste = Mohole_WastePerWorker * 5
 
-    for _, key in ipairs({
-        "construction_cost_Concrete", "construction_cost_Metals",
-        "construction_cost_MachineParts", "construction_cost_Electronics",
-        "construction_cost_Polymers", "construction_cost_PreciousMetals",
-        "construction_cost_PreciousMinerals",
-    }) do
-        local v = tmpl[key]
-        if type(v) == "number" and v > 0 then
-            local half = floatfloor(v / 2)
-            Wonder_Set(tmpl, key, half)
-            Wonder_Set(cls, key, half)
-            Wonder_Set(base, key, half)
-        end
+    local vanillaCosts = Mohole_GetVanillaCosts(tmpl)
+
+    for key, vanilla in pairs(vanillaCosts) do
+        local half = floatfloor(vanilla / 2)
+
+        Wonder_Set(tmpl, key, half)
+        Wonder_Set(cls, key, half)
+        Wonder_Set(base, key, half)
     end
 
     for _, obj in ipairs({ tmpl, cls, base }) do
